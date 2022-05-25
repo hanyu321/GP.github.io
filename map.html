@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible"  content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>灾情损失系统</title>
+    <link rel="stylesheet" href="css/style.default.css" type="text/css" /> 
+    <link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css">
+    <script src="https://unpkg.com/terraformer@1.0.7"></script>
+    <script src="https://unpkg.com/terraformer-arcgis-parser@1.0.5"></script>
+    <script type="text/javascript" src="js/plugins/jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="js/plugins/jquery-ui-1.8.16.custom.min.js"></script>
+    <script type="text/javascript" src="js/plugins  /jquery.cookie.js"></script>
+    <script type="text/javascript" src="js/plugins/jquery.uniform.min.js"></script>
+    <script type="text/javascript" src="js/plugins/jquery.flot.min.js"></script>
+    <script type="text/javascript" src="js/plugins/jquery.flot.resize.min.js"></script>
+    <script type="text/javascript" src="js/plugins/jquery.slimscroll.js"></script>
+    <script type="text/javascript" src="js/custom/general.js"></script>
+    <script type="text/javascript" src="js/custom/dashboard.js"></script>
+    <script type="text/javascript" src="js/geojsonlayer.js"></script>
+    <script src="https://js.arcgis.com/4.23/"></script>
+    <style>
+        html, body, #container {
+            height: 100%;   
+            width: 100%;
+            margin: 0;
+        }
+    </style>
+    
+
+    <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="js/plugins/excanvas.min.js"></script><![endif]-->
+    <!--[if IE 9]>
+        <link rel="stylesheet" media="screen" href="css/style.ie9.css"/>
+    <![endif]-->
+    <!--[if IE 8]>
+        <link rel="stylesheet" media="screen" href="css/style.ie8.css"/>
+    <![endif]-->
+    <!--[if lt IE 9]>
+        <script src="js/plugins/css3-mediaqueries.js"></script>
+    <![endif]-->    
+</head>
+
+<body>
+<div class="bodywrapper" id="1">
+    <div class="topheader">
+        <div class="left">
+            <h1 class="logo">灾情损失<span>系统</span></h1>
+            <span class="slogan">后台管理系统</span>
+            
+            <!--search-->
+            
+            <br clear="all" />
+            
+        </div><!--left-->
+    </div><!--topheader-->
+    <div class="header">
+    	<ul class="headermenu">
+        	<li><a href="index.html"><span class="icon icon-flatscreen"></span>主页</a></li>
+            <li class="current"><a href="map.html"><span class="icon icon-pencil"></span>灾情地图</a></li>
+        </ul>        
+    </div><!--header-->
+
+    <div class="centercontent" id="2">
+        <div class="pageheader">
+            <h1 class="pagetitle">灾情数据展示</h1>  
+        </div><!--pageheader-->
+        <div id="contentwrapper" class="contentwrapper">
+            <div id="updates" class="subcontent">
+                <div id="container1" style="width:100%; height: 700px;"></div>
+            </div>
+        </div>
+        <br clear="all" />
+        
+	</div><!-- content -->
+</div><!--bodywrapper-->
+<script>
+    var Search = false;
+    function search()
+    {
+        Search = true;
+    }
+    require([
+        "esri/config",
+        "esri/Map", 
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/geometry/Point",
+        "esri/rest/find",
+        "esri/rest/support/FindParameters",
+        "esri/rest/support/FindResult"], function (esriConfig, Map, MapView, FeatureLayer, Point, find, FindParameters, FindResult) {
+
+        esriConfig.apiKey = "AAPK2d820e6d3ace4b78979f4b4f3b2392de3wxgZY-6b4kbRixR4RUeNq2mq8EYvLmA2il_muTh5ZsjvFu6eFgvP7ovsyaRqlkk";
+
+        const map = new Map({
+            basemap: "arcgis-topographic" // Basemap layer service
+        });
+
+        const view = new MapView({
+            map: map,
+            center: [116.397428, 39.90923], // Longitude, latitude
+            zoom: 4.5, // Zoom level
+            container: "container1" // Div element
+        });
+        
+        const BrickLayer = new FeatureLayer({
+            url: "https://services6.arcgis.com/RmS1fN4Tj5sk7K0y/arcgis/rest/services/brick/FeatureServer/0"
+        });
+
+        map.add(BrickLayer);
+        
+        const GDPLayer = new FeatureLayer({
+            url: "https://services6.arcgis.com/RmS1fN4Tj5sk7K0y/arcgis/rest/services/gdp/FeatureServer/0"
+        });
+
+        map.add(GDPLayer);
+
+        GDPLayer.visible = false;
+        
+        const LanduseLayer = new FeatureLayer({
+            url: "https://services6.arcgis.com/RmS1fN4Tj5sk7K0y/arcgis/rest/services/landuse/FeatureServer/0"
+        });
+
+        map.add(LanduseLayer);
+
+        LanduseLayer.visible = false;
+
+        const OtherLayer = new FeatureLayer({
+            url: "https://services6.arcgis.com/RmS1fN4Tj5sk7K0y/arcgis/rest/services/other/FeatureServer/0"
+        });
+
+        map.add(OtherLayer);
+        
+        OtherLayer.visible = false;
+        
+        const RcframeLayer = new FeatureLayer({
+            url: "https://services6.arcgis.com/RmS1fN4Tj5sk7K0y/arcgis/rest/services/rcframe/FeatureServer/0"
+        });
+
+        map.add(RcframeLayer);
+
+        RcframeLayer.visible = false;
+
+        const SingleLayer = new FeatureLayer({
+            url: "https://services6.arcgis.com/RmS1fN4Tj5sk7K0y/arcgis/rest/services/single/FeatureServer/0"
+        });
+
+        map.add(SingleLayer);
+
+        SingleLayer.visible = false;
+
+        const LayerSQL = ["多层砌体", "房屋总面积", "其他房屋", "人口", "GDP", "土地利用", "多层钢筋混泥土"];
+        let whereClause = LayerSQL[0];
+
+        const select = document.createElement("select","");
+        select.setAttribute("class", "esri-widget esri-select");
+        select.setAttribute("style", "width: 200px; font-family: 'Avenir Next'; font-size: 1em");
+        LayerSQL.forEach(function(sql){
+            let option = document.createElement("option");
+            option.value = sql;
+            option.innerHTML = sql;
+            select.appendChild(option);
+        });
+
+        view.ui.add(select, "top-right");
+
+        let nowLayer = BrickLayer;
+
+        select.addEventListener('change', (event) => {
+            whereClause = event.target.value;
+            if(whereClause == "多层砌体") 
+            {
+                BrickLayer.visible = true;
+                GDPLayer.visible = false;
+                LanduseLayer.visible = false;
+                OtherLayer.visible = false;
+                RcframeLayer.visible = false;
+                SingleLayer.visible = false;
+                nowLayer = BrickLayer;
+            }
+
+            if(whereClause == "其他房屋") 
+            {
+                BrickLayer.visible = false;
+                GDPLayer.visible = false;
+                LanduseLayer.visible = false;
+                OtherLayer.visible = true;
+                RcframeLayer.visible = false;
+                SingleLayer.visible = false;
+                nowLayer = OtherLayer;
+            }
+
+            if(whereClause == "人口") 
+            {
+                BrickLayer.visible = false;
+                GDPLayer.visible = false;
+                LanduseLayer.visible = false;
+                OtherLayer.visible = false;
+                RcframeLayer.visible = false;
+                SingleLayer.visible = true;
+                nowLayer = SingleLayer;
+            }
+
+            if(whereClause == "GDP") 
+            {
+                BrickLayer.visible = false;
+                GDPLayer.visible = true;
+                LanduseLayer.visible = false;
+                OtherLayer.visible = false;
+                RcframeLayer.visible = false;
+                SingleLayer.visible = false;
+                nowLayer = GDPLayer;
+            }
+
+            if(whereClause == "土地利用") 
+            {
+                BrickLayer.visible = false;
+                GDPLayer.visible = false;
+                LanduseLayer.visible = true;
+                OtherLayer.visible = false;
+                RcframeLayer.visible = false;
+                SingleLayer.visible = false;
+                nowLayer = LanduseLayer;
+            }
+
+            if(whereClause == "多层钢筋混泥土") 
+            {
+                BrickLayer.visible = false;
+                GDPLayer.visible = false;
+                LanduseLayer.visible = false;
+                OtherLayer.visible = false;
+                RcframeLayer.visible = true;
+                SingleLayer.visible = false;
+                nowLayer = RcframeLayer;
+            }
+        });
+
+        //根据经纬度切换地图
+
+        const lat = document.createElement("ul", "")
+
+        const latinput = document.createElement("input", "")
+        latinput.id = "lat";
+        latinput.setAttribute("class", "esri-widget esri-input");
+        latinput.setAttribute("style", "width: 200px; font-family: 'Avenir Next'; font-size: 1em");
+
+        const lattext = document.createTextNode("LAT:")
+        
+        lat.appendChild(lattext);
+        lat.appendChild(latinput);
+
+        view.ui.add(lat, "top-right");
+
+        const lon = document.createElement("ul", "")
+
+        const loninput = document.createElement("input", "")
+        loninput.id = "lon";
+        loninput.setAttribute("class", "esri-widget esri-input");
+        loninput.setAttribute("style", "width: 200px; font-family: 'Avenir Next'; font-size: 1em");
+
+        const lontext = document.createTextNode("LON:")
+        
+        lon.appendChild(lontext);
+        lon.appendChild(loninput);
+
+        view.ui.add(lon, "top-right");
+
+        const submit = document.createElement("input", "");
+        submit.type = "button";
+        submit.onclick = search;
+        submit.value = "Search";
+
+        view.ui.add(submit, "top-right");
+
+        function search()
+        {
+            const pt = new Point({
+                latitude: document.getElementById("lat").value,
+                longitude: document.getElementById("lon").value
+            });
+            view.goTo(pt)
+            view.zoom = 7;
+
+            //显示该经纬度下数据
+            let params = new FindParameters({
+                layerIds: [0],
+                searchFields: ["lat","lon"],
+                searchText: [document.getElementById("lat").value,document.getElementById("lon").value],
+                returnGeometry: true
+            })
+
+            alert(params.searchFields);
+            
+            find(nowLayer.url,params).then(function(result){
+                alert(123);
+            });
+        }
+
+
+        
+    });
+</script>
+
+<script type="text/javascript">
+    var mp = document.getElementById("func2");
+    mp.onclick=loadmap
+    function loadmap(){
+        require([
+            "esri/config",
+            "esri/Map", 
+            "esri/views/MapView",
+            "esri/layers/FeatureLayer",
+            "esri/widgets/Editor"], function (esriConfig,Map, MapView) {
+
+            esriConfig.apiKey = "AAPK2d820e6d3ace4b78979f4b4f3b2392de3wxgZY-6b4kbRixR4RUeNq2mq8EYvLmA2il_muTh5ZsjvFu6eFgvP7ovsyaRqlkk";
+
+            const map = new Map({
+                basemap: "gray" // Basemap layer service
+            });
+
+            const view = new MapView({
+                map: map,
+                center: [116.397428, 39.90923], // Longitude, latitude
+                zoom: 4.5, // Zoom level
+                container: "container2" // Div element
+            });
+            
+
+        });
+    }
+</script>
+
+</body>
+</html>
